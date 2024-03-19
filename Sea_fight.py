@@ -1,3 +1,4 @@
+from random import randint
 #создание класса точки-координаты выстрела
 class Coord:
     def __init__(self,x,y):
@@ -134,22 +135,164 @@ class BattleBoard():
                 self.matrix[x.x][x.y]="X"
                 if ship.lives==0:
                     self.count+=1
-                    self.around(ship,verb=True)
+                    self.around(ship,verb=False)
                     print("Корабль уничтожен!!!")
                     return False
                 else:
                     print("Корабль поврежден!")
                     return True
 
-        self.matrix[x.x][x.y]="."
+
+        self.matrix[x.x][x.y]="T"
         print("Мимо!")
         return False
 
     def begin(self):
         self.busy=[]
 
-# создание класса Игрока
+    # проверка победы одного из игроков
+    def victory(self):
+        return self.count==len(self.ships)
+
+
+# создание общего класса Игрока
 class Player():
     def __init__(self,board,enemy):
         self.board=board
         self.enemy=enemy
+
+
+    def ask(self): # метод, вызываемый в дочерних классах
+        raise NotImplementedError()
+
+    def gaming(self):
+        while True:
+            try:
+                target=self.ask()
+                repeat=self.enemy.shot(target)
+                return repeat
+            except BoardException as e:
+                print(e)
+
+# класс компьютер-игрок
+class AI(Player):
+    def ask(self):
+        x=(Coord(randint(0,5),randint(0,5)))
+        print(f"Компьютер ходит на:{x.x+1}{x.y+1}")
+        return x
+
+# класс пользователь-игрок
+class User(Player):
+    def ask(self):
+        while True:
+            coords=input("Ваш ход. Введите координаты:").split()
+
+            if len(coords)!=2:
+                print("Введите 2 координаты!")
+                continue
+
+            x,y=coords
+
+            if not (x.isdigit()) or not (y.isdigit()):
+                print("Неверный формат. Введите числа!")
+                continue
+
+            x,y=int(x),int(y)
+
+            return Coord(x-1,y-1)
+
+
+# описание игрового процесса
+class Game():
+    def __init__(self,size=6):
+        self.size=size
+        player=self.create_board()
+        computer=self.create_board()
+        computer.hid=True
+
+        self.ai=AI(computer, player)
+        self.us=User(player,computer)
+
+    # метод для расстановки кораблей на доске
+    def try_board(self):
+        lengths = [3, 2, 2, 1, 1, 1, 1] # список с длинами кораблей
+        battle_board=BattleBoard(size= self.size)
+        attempts=0 # счетчик кол-ва попыток расставить корабли
+        for i in lengths:
+            while True:
+                attempts+=1
+                if attempts>2500: # условие остановки бесконечного цикла расстановки, если не получается
+                    return None
+                ship=Ship(Coord(randint(0, self.size), (randint(0, self.size))), i, randint(0,1))
+                try:
+                    battle_board.add_ship(ship)
+                    break
+                except ShipWrongAccomodationEx:
+                    pass
+        battle_board.begin()
+        return battle_board
+
+    # метод который все равно создаст доску, несмотря на None в случае создания в try_board
+    def create_board(self):
+        battle_board=None
+        while battle_board is None:
+            battle_board=self.try_board()
+        return battle_board
+
+    # приветствие
+    def greeting(self):
+        print("     -----------------------       ")
+        print("          ДОБРО ПОЖАЛОВАТЬ         ")
+        print("               В ИГРУ              ")
+        print('           "МОРСКОЙ БОЙ"           ')
+        print("     -----------------------       ")
+        print("        Необходимо вводить         ")
+        print("       2 координаты: x и y         ")
+        print(" x-номер строки, y-номер столбца   ")
+        print("     -----------------------       ")
+
+
+    def print_boards(self):
+        print("-" * 15)
+        print("Доска User:")
+        print(self.us.board)
+        print("-" * 15)
+        print("Доска Computer:")
+        print(self.ai.board)
+
+
+    # создание игрового цикла
+    def game_cycle(self):
+        num = 0 # номер хода
+        while True:
+            self.print_boards()
+            if num % 2 == 0:
+                print("-" * 15)
+                print("Ходит User!")
+                repeat = self.us.gaming()
+            else:
+                print("-" * 15)
+                print("Ходит Computer!")
+                repeat = self.ai.gaming()
+            if repeat: # для того, чтобы счетчик снижался на 1, если игрок делает повторный выстрел при успехе и не нарушалась очередность
+                num -= 1
+
+            if self.ai.board.victory():
+                self.print_boards()
+                print("-" * 20)
+                print("Пользователь выиграл!")
+                break
+
+            if self.us.board.victory():
+                self.print_boards()
+                print("-" * 20)
+                print("Компьютер выиграл!")
+                break
+            num += 1
+
+    def start(self):
+        self.game_cycle()
+        self.greeting()
+
+g=Game()
+g.start()
