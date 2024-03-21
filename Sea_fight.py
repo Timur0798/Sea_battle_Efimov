@@ -1,5 +1,6 @@
 from random import randint
-#создание класса точки-координаты выстрела
+
+#создание класса точки-координаты
 class Coord:
     def __init__(self,x,y):
         self.x=x
@@ -14,7 +15,6 @@ class Coord:
         return f"Coord({self.x}, {self.y})"
 
 
-
 # создание классов исключений
 # общий класс исключений
 class BoardException(Exception):
@@ -22,11 +22,11 @@ class BoardException(Exception):
 
 class OutOfBoardEx(BoardException):
     def __str__(self):
-        print("Выстрел за пределы поля")
+        return("Выстрел за пределы поля")
 
 class BusyCoordEx(BoardException):
     def __str__(self):
-        print("В эту точку уже стреляли")
+        return("В эту точку уже стреляли")
 
 # неверное размещение корабля
 class ShipWrongAccomodationEx(BoardException):
@@ -115,6 +115,7 @@ class BattleBoard():
         for d in ship.coords:
             self.matrix[d.x][d.y]= "■"
             self.busy.append(d)
+
         self.ships.append(ship)
         self.around(ship)
 
@@ -135,9 +136,9 @@ class BattleBoard():
                 self.matrix[x.x][x.y]="X"
                 if ship.lives==0:
                     self.count+=1
-                    self.around(ship,verb=False)
+                    self.around(ship,verb=True)
                     print("Корабль уничтожен!!!")
-                    return False
+                    return True
                 else:
                     print("Корабль поврежден!")
                     return True
@@ -177,8 +178,8 @@ class Player():
 # класс компьютер-игрок
 class AI(Player):
     def ask(self):
-        x=(Coord(randint(0,5),randint(0,5)))
-        print(f"Компьютер ходит на:{x.x+1}{x.y+1}")
+        x=Coord(randint(0,5),randint(0,5))
+        print(f"Компьютер ходит на:{x.x+1} {x.y+1}")
         return x
 
 # класс пользователь-игрок
@@ -206,6 +207,7 @@ class User(Player):
 class Game():
     def __init__(self,size=6):
         self.size=size
+        self.lengths=[3, 2, 2, 1, 1, 1, 1] # список с длинами кораблей
         player=self.create_board()
         computer=self.create_board()
         computer.hid=True
@@ -215,10 +217,9 @@ class Game():
 
     # метод для расстановки кораблей на доске
     def try_board(self):
-        lengths = [3, 2, 2, 1, 1, 1, 1] # список с длинами кораблей
         battle_board=BattleBoard(size= self.size)
         attempts=0 # счетчик кол-ва попыток расставить корабли
-        for i in lengths:
+        for i in self.lengths:
             while True:
                 attempts+=1
                 if attempts>2500: # условие остановки бесконечного цикла расстановки, если не получается
@@ -279,20 +280,21 @@ class Game():
 
             if self.ai.board.victory():
                 self.print_boards()
-                print("-" * 20)
+                print("-" * 15)
                 print("Пользователь выиграл!")
                 break
 
             if self.us.board.victory():
                 self.print_boards()
-                print("-" * 20)
+                print("-" * 15)
                 print("Компьютер выиграл!")
                 break
             num += 1
 
     def start(self):
-        self.game_cycle()
         self.greeting()
+        self.game_cycle()
+
 
 g=Game()
 g.start()
