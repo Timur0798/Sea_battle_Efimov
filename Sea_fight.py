@@ -34,23 +34,32 @@ class ShipWrongAccomodationEx(BoardException):
 
 # создание класса корабля
 class Ship():
-    def __init__(self,bow,len,orient):
-        self.bow=bow
-        self.len=len
-        self.orient=orient
-        self.lives = len
+    def __init__(self,bow,len,orient): # скроем параметры с помощью инкапсуляции
+        self.__bow=bow
+        self.__len=len
+        self.__orient=orient
+        self.__lives = len
+
+    # создание свойства параметра lives и его сеттера для инкапсуляции
+    @property
+    def lives(self):
+        return self.__lives
+
+    @lives.setter
+    def lives(self,len):
+        self.__lives = len
 
     # метод для размещения корабля горизотально или вертикально
     @property
     def coords(self):
         ship_coords=[]
-        for i in range(self.len):
-            start_x=self.bow.x
-            start_y=self.bow.y
+        for i in range(self.__len):
+            start_x=self.__bow.x
+            start_y=self.__bow.y
 
-            if self.orient == 0:
+            if self.__orient == 0:
                 start_x += i
-            elif self.orient == 1:
+            elif self.__orient == 1:
                 start_y += i
 
             ship_coords.append(Coord(start_x, start_y))
