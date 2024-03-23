@@ -1,4 +1,5 @@
 from random import randint
+import time
 
 #создание класса точки-координаты
 class Coord:
@@ -188,6 +189,7 @@ class Player():
 class AI(Player):
     def ask(self):
         x=Coord(randint(0,5),randint(0,5))
+        time.sleep(2)
         print(f"Компьютер ходит на:{x.x+1} {x.y+1}")
         return x
 
